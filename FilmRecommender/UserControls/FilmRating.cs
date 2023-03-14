@@ -3,22 +3,28 @@
     public partial class FilmRating : UserControl
     {
         private int _rating = 1;
+        internal int Id { get; set; }
 
         public FilmRating()
         {
             InitializeComponent();
         }
 
-        private void BtnStarOne_MouseClick(object sender, MouseEventArgs e)
+        internal void SetTitle(string title)
         {
-            _rating = 1;
-            PaintOneStarRating();
+            TxtTitle.Text = title;
         }
 
         internal void SetRating(int rating)
         {
             _rating = rating;
             BtnStar_MouseLeave(null, null);
+        }
+
+        private void BtnStarOne_MouseClick(object sender, MouseEventArgs e)
+        {
+            _rating = 1;
+            PaintOneStarRating();
         }
 
         private void BtnStarOne_MouseEnter(object sender, EventArgs e)
@@ -70,7 +76,7 @@
             PaintFiveStarRating();
         }
 
-        private void BtnStar_MouseLeave(object sender, EventArgs e)
+        private void BtnStar_MouseLeave(object? sender, EventArgs? e)
         {
             switch (_rating)
             {
