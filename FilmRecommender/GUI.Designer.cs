@@ -37,9 +37,10 @@
             TabPageProfile = new TabPage();
             PanelLblInfo = new Panel();
             LblInfoProfile = new Label();
+            TabPageRecommendations = new TabPage();
             PanelSaveProfile = new Panel();
             BtnSaveProfile = new Button();
-            TabPageRecommendations = new TabPage();
+            BackgroundWorkerProfile = new System.ComponentModel.BackgroundWorker();
             PanelInitializeModel.SuspendLayout();
             PanelInitializeModelRight.SuspendLayout();
             TabContent.SuspendLayout();
@@ -93,7 +94,7 @@
             TabContent.Location = new Point(0, 37);
             TabContent.Name = "TabContent";
             TabContent.SelectedIndex = 0;
-            TabContent.Size = new Size(1000, 472);
+            TabContent.Size = new Size(1000, 438);
             TabContent.TabIndex = 1;
             TabContent.Visible = false;
             // 
@@ -101,11 +102,10 @@
             // 
             TabPageProfile.AutoScroll = true;
             TabPageProfile.Controls.Add(PanelLblInfo);
-            TabPageProfile.Controls.Add(PanelSaveProfile);
             TabPageProfile.Location = new Point(4, 29);
             TabPageProfile.Name = "TabPageProfile";
             TabPageProfile.Padding = new Padding(3);
-            TabPageProfile.Size = new Size(992, 439);
+            TabPageProfile.Size = new Size(992, 405);
             TabPageProfile.TabIndex = 0;
             TabPageProfile.Text = "Profile";
             TabPageProfile.UseVisualStyleBackColor = true;
@@ -129,19 +129,29 @@
             LblInfoProfile.TabIndex = 1;
             LblInfoProfile.Text = "Rate the films and click on \"Save\" to store your profile and generate recommendations. Click on \"New model\" to reset this screen.";
             // 
+            // TabPageRecommendations
+            // 
+            TabPageRecommendations.Location = new Point(4, 29);
+            TabPageRecommendations.Name = "TabPageRecommendations";
+            TabPageRecommendations.Padding = new Padding(3);
+            TabPageRecommendations.Size = new Size(992, 405);
+            TabPageRecommendations.TabIndex = 1;
+            TabPageRecommendations.Text = "Recommendations";
+            TabPageRecommendations.UseVisualStyleBackColor = true;
+            // 
             // PanelSaveProfile
             // 
             PanelSaveProfile.Controls.Add(BtnSaveProfile);
             PanelSaveProfile.Dock = DockStyle.Bottom;
-            PanelSaveProfile.Location = new Point(3, 402);
+            PanelSaveProfile.Location = new Point(0, 475);
             PanelSaveProfile.Name = "PanelSaveProfile";
-            PanelSaveProfile.Size = new Size(986, 34);
+            PanelSaveProfile.Size = new Size(1000, 34);
             PanelSaveProfile.TabIndex = 0;
             // 
             // BtnSaveProfile
             // 
             BtnSaveProfile.Dock = DockStyle.Right;
-            BtnSaveProfile.Location = new Point(906, 0);
+            BtnSaveProfile.Location = new Point(920, 0);
             BtnSaveProfile.Name = "BtnSaveProfile";
             BtnSaveProfile.Size = new Size(80, 34);
             BtnSaveProfile.TabIndex = 0;
@@ -149,15 +159,12 @@
             BtnSaveProfile.UseVisualStyleBackColor = true;
             BtnSaveProfile.Click += BtnSaveProfile_Click;
             // 
-            // TabPageRecommendations
+            // BackgroundWorkerProfile
             // 
-            TabPageRecommendations.Location = new Point(4, 29);
-            TabPageRecommendations.Name = "TabPageRecommendations";
-            TabPageRecommendations.Padding = new Padding(3);
-            TabPageRecommendations.Size = new Size(992, 439);
-            TabPageRecommendations.TabIndex = 1;
-            TabPageRecommendations.Text = "Recommendations";
-            TabPageRecommendations.UseVisualStyleBackColor = true;
+            BackgroundWorkerProfile.WorkerReportsProgress = true;
+            BackgroundWorkerProfile.DoWork += BackgroundWorkerProfile_DoWork;
+            BackgroundWorkerProfile.ProgressChanged += BackgroundWorkerProfile_ProgressChanged;
+            BackgroundWorkerProfile.RunWorkerCompleted += BackgroundWorkerProfile_RunWorkerCompleted;
             // 
             // GUI
             // 
@@ -165,6 +172,7 @@
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(1000, 509);
             Controls.Add(TabContent);
+            Controls.Add(PanelSaveProfile);
             Controls.Add(PanelInitializeModel);
             Icon = (Icon)resources.GetObject("$this.Icon");
             Name = "GUI";
@@ -192,5 +200,6 @@
         private Button BtnSaveProfile;
         private Label LblInfoProfile;
         private Panel PanelLblInfo;
+        private System.ComponentModel.BackgroundWorker BackgroundWorkerProfile;
     }
 }
