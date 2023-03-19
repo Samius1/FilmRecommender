@@ -38,6 +38,10 @@
             PanelLblInfo = new Panel();
             LblInfoProfile = new Label();
             TabPageRecommendations = new TabPage();
+            PanelRecommendations = new Panel();
+            PanelRecommendationsInfo = new Panel();
+            LblRecommendations = new Label();
+            BtnRecommendations = new Button();
             PanelSaveProfile = new Panel();
             BtnSaveProfile = new Button();
             BackgroundWorkerProfile = new System.ComponentModel.BackgroundWorker();
@@ -46,6 +50,8 @@
             TabContent.SuspendLayout();
             TabPageProfile.SuspendLayout();
             PanelLblInfo.SuspendLayout();
+            TabPageRecommendations.SuspendLayout();
+            PanelRecommendationsInfo.SuspendLayout();
             PanelSaveProfile.SuspendLayout();
             SuspendLayout();
             // 
@@ -131,6 +137,8 @@
             // 
             // TabPageRecommendations
             // 
+            TabPageRecommendations.Controls.Add(PanelRecommendations);
+            TabPageRecommendations.Controls.Add(PanelRecommendationsInfo);
             TabPageRecommendations.Location = new Point(4, 29);
             TabPageRecommendations.Name = "TabPageRecommendations";
             TabPageRecommendations.Padding = new Padding(3);
@@ -138,6 +146,46 @@
             TabPageRecommendations.TabIndex = 1;
             TabPageRecommendations.Text = "Recommendations";
             TabPageRecommendations.UseVisualStyleBackColor = true;
+            // 
+            // PanelRecommendations
+            // 
+            PanelRecommendations.AutoScroll = true;
+            PanelRecommendations.Dock = DockStyle.Fill;
+            PanelRecommendations.Location = new Point(3, 32);
+            PanelRecommendations.Name = "PanelRecommendations";
+            PanelRecommendations.Size = new Size(986, 370);
+            PanelRecommendations.TabIndex = 1;
+            // 
+            // PanelRecommendationsInfo
+            // 
+            PanelRecommendationsInfo.Controls.Add(LblRecommendations);
+            PanelRecommendationsInfo.Controls.Add(BtnRecommendations);
+            PanelRecommendationsInfo.Dock = DockStyle.Top;
+            PanelRecommendationsInfo.Location = new Point(3, 3);
+            PanelRecommendationsInfo.Name = "PanelRecommendationsInfo";
+            PanelRecommendationsInfo.Size = new Size(986, 29);
+            PanelRecommendationsInfo.TabIndex = 0;
+            // 
+            // LblRecommendations
+            // 
+            LblRecommendations.AutoSize = true;
+            LblRecommendations.Dock = DockStyle.Top;
+            LblRecommendations.Location = new Point(0, 0);
+            LblRecommendations.Name = "LblRecommendations";
+            LblRecommendations.Size = new Size(493, 20);
+            LblRecommendations.TabIndex = 0;
+            LblRecommendations.Text = "Click on \"Find recommendations\" to find films similar to your preferences";
+            // 
+            // BtnRecommendations
+            // 
+            BtnRecommendations.Dock = DockStyle.Right;
+            BtnRecommendations.Location = new Point(814, 0);
+            BtnRecommendations.Name = "BtnRecommendations";
+            BtnRecommendations.Size = new Size(172, 29);
+            BtnRecommendations.TabIndex = 1;
+            BtnRecommendations.Text = "Find recommendations";
+            BtnRecommendations.UseVisualStyleBackColor = true;
+            BtnRecommendations.Click += BtnRecommendations_Click;
             // 
             // PanelSaveProfile
             // 
@@ -184,6 +232,9 @@
             TabPageProfile.ResumeLayout(false);
             PanelLblInfo.ResumeLayout(false);
             PanelLblInfo.PerformLayout();
+            TabPageRecommendations.ResumeLayout(false);
+            PanelRecommendationsInfo.ResumeLayout(false);
+            PanelRecommendationsInfo.PerformLayout();
             PanelSaveProfile.ResumeLayout(false);
             ResumeLayout(false);
         }
@@ -202,5 +253,9 @@
         private Label LblInfoProfile;
         private Panel PanelLblInfo;
         private System.ComponentModel.BackgroundWorker BackgroundWorkerProfile;
+        private Panel PanelRecommendations;
+        private Panel PanelRecommendationsInfo;
+        private Button BtnRecommendations;
+        private Label LblRecommendations;
     }
 }

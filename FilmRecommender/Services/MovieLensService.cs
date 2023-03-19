@@ -30,45 +30,18 @@ namespace FilmRecommender.Services
 
         internal static void CreateNeighborhood(Profile userProfile)
         {
-            var userMean = userProfile.Scores.Values.Sum() * 1.0 / userProfile.Scores.Count;
-            var userSimilitudes = new Dictionary<int, double>();
-
             if (!Model.Any())
             {
                 RecreateModel();
             }
 
-            foreach (var profile in Model.Select(x => x.Value))
-            {
-                var filmsInCommon = profile.Scores.Where(x => userProfile.Scores.ContainsKey(x.Key));
-                var comparerMean = filmsInCommon.Select(x => x.Value).Sum() * 1.0 / filmsInCommon.Count();
-
-                var similitude = 0d;
-                var numerator = 0d;
-                var denominator = 0d;
-                foreach (var film in filmsInCommon)
-                {
-                    var userNumerator = userProfile.Scores.First(x => x.Key == film.Key).Value - userMean;
-                    var comparerNumerator = filmsInCommon.First(x => x.Key == film.Key).Value - comparerMean;
-                    numerator += userNumerator * comparerNumerator;
-                }
-
-                var userDenominator = userProfile.Scores.Where(x => profile.Scores.ContainsKey(x.Key))
-                                        .Select(x => (x.Value - userMean) * (x.Value - userMean)).Sum();
-                var comparerDenominator = filmsInCommon
-                                        .Select(x => (x.Value - userMean) * (x.Value - userMean)).Sum();
-                denominator = Math.Sqrt(userDenominator) * Math.Sqrt(comparerDenominator);
-
-                similitude = numerator / denominator;
-                userSimilitudes.Add(profile.UserId, similitude);
-            }
-
-            Neighborhood = userSimilitudes;
+            //Neighborhood = PearsonCorrelationNeighborhood(userProfile);
+            Neighborhood = CosineNeighborhood(userProfile);
         }
 
-        internal static List<Film> GetRecommendations(Profile userProfile)
+        internal static IEnumerable<Recommendation> GetRecommendations(Profile userProfile)
         {
-            var recommendations = new List<Film>();
+            var recommendations = new List<Recommendation>();
             var filteredFilmIds = Films.Select(x => x.Id).Except(userProfile.Scores.Keys);
             IEnumerable<int>? similarUsers = null;
             var similarity = 0.8;
@@ -94,15 +67,15 @@ namespace FilmRecommender.Services
                             numberOfHits++;
                         }
                     }
-
-                    if (ratingSum * 1.0 / numberOfHits >= 4)
+                    var rating = ratingSum * 1.0 / numberOfHits;
+                    if (rating >= 4)
                     {
-                        recommendations.Add(new Film { Id = filmId, Name = GetFilmName(filmId) });
+                        recommendations.Add(new Recommendation { Id = filmId, Name = GetFilmName(filmId), Rating = (int)rating });
                     }
                 }
             }
 
-            return recommendations;
+            return recommendations.OrderByDescending(x => x.Rating);
         }
 
         internal static string GetFilmName(int id)
@@ -120,14 +93,72 @@ namespace FilmRecommender.Services
 
         private static int GetScoreByIds(int userId, int filmId)
         {
-            try
+            Model[userId].Scores.TryGetValue(filmId, out var score);
+            return score;
+        }
+
+        private static Dictionary<int, double> PearsonCorrelationNeighborhood(Profile userProfile)
+        {
+            var userSimilitudes = new Dictionary<int, double>();
+            var userMean = userProfile.Scores.Values.Sum() * 1.0 / userProfile.Scores.Count;
+            foreach (var profile in Model.Select(x => x.Value))
             {
-                return Model[userId].Scores[filmId];
+                var filmsInCommon = profile.Scores.Where(x => userProfile.Scores.ContainsKey(x.Key));
+                if (filmsInCommon.Any())
+                {
+                    var comparerMean = filmsInCommon.Select(x => x.Value).Sum() * 1.0 / filmsInCommon.Count();
+
+                    var similitude = 0d;
+                    var numerator = 0d;
+                    var denominator = 0d;
+                    foreach (var film in filmsInCommon)
+                    {
+                        var userNumerator = userProfile.Scores.First(x => x.Key == film.Key).Value - userMean;
+                        var comparerNumerator = filmsInCommon.First(x => x.Key == film.Key).Value - comparerMean;
+                        numerator += userNumerator * comparerNumerator;
+                    }
+
+                    var userDenominator = userProfile.Scores.Where(x => profile.Scores.ContainsKey(x.Key))
+                                            .Select(x => (x.Value - userMean) * (x.Value - userMean)).Sum();
+                    var comparerDenominator = filmsInCommon
+                                            .Select(x => (x.Value - userMean) * (x.Value - userMean)).Sum();
+                    denominator = Math.Sqrt(userDenominator) * Math.Sqrt(comparerDenominator);
+
+                    similitude = numerator / denominator;
+                    userSimilitudes.Add(profile.UserId, similitude);
+                }
             }
-            catch (Exception)
+            return userSimilitudes;
+        }
+
+        private static Dictionary<int, double> CosineNeighborhood(Profile userProfile)
+        {
+            var userSimilitudes = new Dictionary<int, double>();
+            foreach (var profile in Model.Select(x => x.Value))
             {
-                return 0;
+                var filmsInCommon = profile.Scores.Where(x => userProfile.Scores.ContainsKey(x.Key));
+                if (filmsInCommon.Any())
+                {
+                    var similitude = 0d;
+                    var numerator = 0d;
+                    var denominator = 0d;
+                    foreach (var film in filmsInCommon)
+                    {
+                        var userNumerator = userProfile.Scores.First(x => x.Key == film.Key).Value;
+                        var comparerNumerator = filmsInCommon.First(x => x.Key == film.Key).Value;
+                        numerator += userNumerator * comparerNumerator;
+                    }
+
+                    var userDenominator = userProfile.Scores.Where(x => profile.Scores.ContainsKey(x.Key))
+                                            .Select(x => x.Value * x.Value).Sum();
+                    var comparerDenominator = filmsInCommon.Select(x => x.Value * x.Value).Sum();
+                    denominator = Math.Sqrt(userDenominator) * Math.Sqrt(comparerDenominator);
+
+                    similitude = numerator / denominator;
+                    userSimilitudes.Add(profile.UserId, similitude);
+                }
             }
+            return userSimilitudes;
         }
 
         private static void RecreateModel()

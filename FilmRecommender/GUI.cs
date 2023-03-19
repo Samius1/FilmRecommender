@@ -38,6 +38,26 @@ namespace FilmRecommender
             TabPageRecommendations.Enabled = true;
         }
 
+        private void BtnRecommendations_Click(object sender, EventArgs e)
+        {
+            PanelRecommendations.Controls.Clear();
+            MovieLensService.CreateNeighborhood(userProfile);
+            var recommendations = MovieLensService.GetRecommendations(userProfile);
+            foreach (var recommendation in recommendations.Take(Configuration.NumberOfFilmsToRecommend).OrderBy(x => x.Rating))
+            {
+                var lblInfo = new Label();
+                lblInfo.AutoSize = true;
+                lblInfo.Dock = DockStyle.Top;
+                lblInfo.Location = new Point(0, 0);
+                lblInfo.Name = $"LblInfo{recommendation.Id}";
+                lblInfo.Size = new Size(493, 20);
+                lblInfo.Text = $"{recommendation.Name} - {recommendation.Rating} stars";
+                lblInfo.Font = new Font("Segoe UI", 20F, FontStyle.Regular, GraphicsUnit.Point);
+                lblInfo.Click += LblInfoRecommendations_Click;
+                PanelRecommendations.Controls.Add(lblInfo);
+            }
+        }
+
         private void BackgroundWorkerProfile_DoWork(object sender, System.ComponentModel.DoWorkEventArgs e)
         {
             if (BtnLoadModel.Text == LoadModelButtonText)
@@ -69,6 +89,11 @@ namespace FilmRecommender
             {
 
             }
+        }
+
+        private void LblInfoRecommendations_Click(object sender, EventArgs e)
+        {
+            // TODO: Show a pop-up to ask the user to rate the film and store it
         }
 
         private void UpdateProfileFromUI()
