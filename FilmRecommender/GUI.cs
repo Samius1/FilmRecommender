@@ -54,6 +54,7 @@ namespace FilmRecommender
                 lblInfo.Text = $"{recommendation.Name} - {recommendation.Rating} stars";
                 lblInfo.Font = new Font("Segoe UI", 20F, FontStyle.Regular, GraphicsUnit.Point);
                 lblInfo.Click += LblInfoRecommendations_Click;
+                lblInfo.Cursor = Cursors.Hand;
                 PanelRecommendations.Controls.Add(lblInfo);
             }
         }
@@ -93,13 +94,32 @@ namespace FilmRecommender
 
         private void LblInfoRecommendations_Click(object sender, EventArgs e)
         {
-            // TODO: Show a pop-up to ask the user to rate the film and store it
+            var label = (Label)sender;
+            var filmId = int.Parse(label.Name.Remove(0, 7));
+            var filmTitle = MovieLensService.GetFilmName(filmId);
+            var dialogRating = new RateSingleMovie();
+            dialogRating.SetTitle(filmTitle);
+            if (dialogRating.ShowDialog() == DialogResult.OK)
+            {
+                userProfile.Scores.Add(filmId, dialogRating.Rating);
+                UserService.SaveUserProfile(userProfile);
+
+                PanelRecommendations.Controls.Remove(label);
+
+                var filmRating = new FilmRating();
+                filmRating.Id = filmId;
+                filmRating.SetTitle(filmTitle);
+                filmRating.SetRating(dialogRating.Rating);
+                filmRating.Dock = DockStyle.Top;
+
+                PanelRatedFilms.Controls.Add(filmRating);
+            }
         }
 
         private void UpdateProfileFromUI()
         {
             var userRatings = new Dictionary<int, int>();
-            foreach (var rating in TabPageProfile.Controls.OfType<FilmRating>())
+            foreach (var rating in PanelRatedFilms.Controls.OfType<FilmRating>())
             {
                 userRatings.Add(rating.Id, rating.Rating);
             }
@@ -116,8 +136,7 @@ namespace FilmRecommender
                 filmRating.SetRating(filmScore.Value);
                 filmRating.Dock = DockStyle.Top;
 
-                TabPageProfile.Controls.Add(filmRating);
-                TabPageProfile.Controls.SetChildIndex(filmRating, 0);
+                PanelRatedFilms.Controls.Add(filmRating);
             }
         }
     }

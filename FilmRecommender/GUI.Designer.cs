@@ -35,6 +35,7 @@
             ProgressBarLoadingModel = new ProgressBar();
             TabContent = new TabControl();
             TabPageProfile = new TabPage();
+            PanelRatedFilms = new Panel();
             PanelLblInfo = new Panel();
             LblInfoProfile = new Label();
             TabPageRecommendations = new TabPage();
@@ -106,7 +107,7 @@
             // 
             // TabPageProfile
             // 
-            TabPageProfile.AutoScroll = true;
+            TabPageProfile.Controls.Add(PanelRatedFilms);
             TabPageProfile.Controls.Add(PanelLblInfo);
             TabPageProfile.Location = new Point(4, 29);
             TabPageProfile.Name = "TabPageProfile";
@@ -115,6 +116,15 @@
             TabPageProfile.TabIndex = 0;
             TabPageProfile.Text = "Profile";
             TabPageProfile.UseVisualStyleBackColor = true;
+            // 
+            // PanelRatedFilms
+            // 
+            PanelRatedFilms.AutoScroll = true;
+            PanelRatedFilms.Dock = DockStyle.Fill;
+            PanelRatedFilms.Location = new Point(3, 28);
+            PanelRatedFilms.Name = "PanelRatedFilms";
+            PanelRatedFilms.Size = new Size(986, 374);
+            PanelRatedFilms.TabIndex = 3;
             // 
             // PanelLblInfo
             // 
@@ -257,5 +267,6 @@
         private Panel PanelRecommendationsInfo;
         private Button BtnRecommendations;
         private Label LblRecommendations;
+        private Panel PanelRatedFilms;
     }
 }
