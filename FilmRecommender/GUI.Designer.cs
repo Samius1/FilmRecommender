@@ -177,6 +177,7 @@
             Icon = (Icon)resources.GetObject("$this.Icon");
             Name = "GUI";
             Text = "Film Recommender";
+            Load += GUI_Load;
             PanelInitializeModel.ResumeLayout(false);
             PanelInitializeModelRight.ResumeLayout(false);
             TabContent.ResumeLayout(false);

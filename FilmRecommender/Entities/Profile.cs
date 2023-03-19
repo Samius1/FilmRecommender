@@ -3,6 +3,7 @@
     internal class Profile
     {
         internal int UserId { get; set; }
-        internal Dictionary<Film, int> Scores { get; set; } = new Dictionary<Film, int>();
+        public Dictionary<int, int> Scores { get; set; } = new Dictionary<int, int>();
+        public List<Film> Recommendations { get; set; } = new List<Film>();
     }
 }

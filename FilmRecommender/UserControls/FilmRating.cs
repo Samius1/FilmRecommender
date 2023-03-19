@@ -1,8 +1,10 @@
-﻿namespace FilmRecommender.UserControls
+﻿using FilmRecommender.Entities;
+
+namespace FilmRecommender.UserControls
 {
     public partial class FilmRating : UserControl
     {
-        private int _rating = 1;
+        internal int Rating { get; private set; } = 1;
         internal int Id { get; set; }
 
         public FilmRating()
@@ -17,13 +19,13 @@
 
         internal void SetRating(int rating)
         {
-            _rating = rating;
+            Rating = rating;
             BtnStar_MouseLeave(null, null);
         }
 
         private void BtnStarOne_MouseClick(object sender, MouseEventArgs e)
         {
-            _rating = 1;
+            Rating = 1;
             PaintOneStarRating();
         }
 
@@ -34,7 +36,7 @@
 
         private void BtnStarTwo_MouseClick(object sender, EventArgs e)
         {
-            _rating = 2;
+            Rating = 2;
             PaintTwoStarRating();
         }
 
@@ -45,7 +47,7 @@
 
         private void BtnStarThree_MouseClick(object sender, EventArgs e)
         {
-            _rating = 3;
+            Rating = 3;
             PaintThreeStarRating();
         }
 
@@ -56,7 +58,7 @@
 
         private void BtnStarFour_MouseClick(object sender, EventArgs e)
         {
-            _rating = 4;
+            Rating = 4;
             PaintFourStarRating();
         }
 
@@ -67,7 +69,7 @@
 
         private void BtnStarFive_MouseClick(object sender, EventArgs e)
         {
-            _rating = 5;
+            Rating = 5;
             PaintFiveStarRating();
         }
 
@@ -78,7 +80,7 @@
 
         private void BtnStar_MouseLeave(object? sender, EventArgs? e)
         {
-            switch (_rating)
+            switch (Rating)
             {
                 case 1: PaintOneStarRating(); break;
                 case 2: PaintTwoStarRating(); break;
