@@ -68,7 +68,13 @@ namespace FilmRecommender
             }
             else
             {
-
+                if (MessageBox.Show("Do you really want to recreate the model?", "Delete actual model", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+                {
+                    MovieLensService.LoadModel(BackgroundWorkerProfile);
+                    userProfile.Scores = MovieLensService.GetFilmsToRate();
+                    userProfile.Recommendations = new List<Film>();
+                    UserService.SaveUserProfile(userProfile);
+                }
             }
         }
 

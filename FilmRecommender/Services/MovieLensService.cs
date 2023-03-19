@@ -11,6 +11,8 @@ namespace FilmRecommender.Services
 
         internal static void LoadModel(BackgroundWorker backgroundWorker)
         {
+            Films = new List<Film>();
+            Model = new Dictionary<int, Profile>();
             RecreateFilms(backgroundWorker);
             RecreateModel();
         }
