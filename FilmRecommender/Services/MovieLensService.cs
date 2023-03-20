@@ -5,9 +5,9 @@ namespace FilmRecommender.Services
 {
     internal class MovieLensService
     {
-        private static Dictionary<int, Profile> Model = new Dictionary<int, Profile>();
-        private static List<Film> Films = new List<Film>();
-        private static Dictionary<int, double> Neighborhood = new Dictionary<int, double>();
+        private static Dictionary<int, Profile> Model = new();
+        private static List<Film> Films = new();
+        private static Dictionary<int, (double, double)> Neighborhood = new(); // UserId - Similitude, film mean
 
         internal static void LoadModel(BackgroundWorker backgroundWorker)
         {
@@ -44,7 +44,7 @@ namespace FilmRecommender.Services
         {
             var ratedFilms = new List<Recommendation>();
             var filteredFilmIds = Films.Select(x => x.Id).Except(userProfile.Scores.Keys);
-            var similarUsers = Neighborhood.Where(x => x.Value > 0);
+            var similarUsers = Neighborhood.Where(x => x.Value.Item1 > 0);
             if (similarUsers.Any())
             {
                 similarUsers = similarUsers.OrderByDescending(x => x.Value).Take(similarUsers.Count() / 5);
@@ -53,9 +53,10 @@ namespace FilmRecommender.Services
             {
                 similarUsers = Neighborhood.OrderByDescending(x => x.Value).Take(similarUsers.Count() / 5);
             }
-            // Page 28 - Review to calculate the real answer. Create presentation with this info
+
             if (similarUsers?.Any() ?? false)
             {
+                var principalUserMean = userProfile.Scores.Values.Sum() * 1.0 / userProfile.Scores.Count;
                 foreach (var filmId in filteredFilmIds)
                 {
                     var nominator = 0d;
@@ -66,12 +67,12 @@ namespace FilmRecommender.Services
                         var score = GetScoreByIds(user.Key, filmId);
                         if(score > 0)
                         {
-                            nominator += (user.Value * score);
-                            denominator += Math.Abs(user.Value);
+                            nominator += (user.Value.Item1 * (score - user.Value.Item2));
+                            denominator += Math.Abs(user.Value.Item1);
                         }
                     }
 
-                    var rating = nominator / denominator;
+                    var rating = principalUserMean + nominator / denominator;
                     ratedFilms.Add(new Recommendation { Id = filmId, Name = GetFilmName(filmId), Rating = (int)rating });
                 }
             }
@@ -98,9 +99,9 @@ namespace FilmRecommender.Services
             return score;
         }
 
-        private static Dictionary<int, double> PearsonCorrelationNeighborhood(Profile userProfile)
+        private static Dictionary<int, (double, double)> PearsonCorrelationNeighborhood(Profile userProfile)
         {
-            var userSimilitudes = new Dictionary<int, double>();
+            var userSimilitudes = new Dictionary<int, (double, double)>();
             var userMean = userProfile.Scores.Values.Sum() * 1.0 / userProfile.Scores.Count;
             foreach (var profile in Model.Select(x => x.Value))
             {
@@ -122,7 +123,7 @@ namespace FilmRecommender.Services
                     var denominator = Math.Sqrt(userDenominator) * Math.Sqrt(comparerDenominator);
 
                     var similitude = numerator / denominator;
-                    userSimilitudes.Add(profile.UserId, similitude);
+                    userSimilitudes.Add(profile.UserId, (similitude, comparerMean));
                 }
             }
             return userSimilitudes;

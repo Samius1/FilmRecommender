@@ -48,6 +48,7 @@ namespace FilmRecommender
             MovieLensService.CreateNeighborhood(userProfile);
             var recommendations = MovieLensService.GetFilmsRated(userProfile);
             userProfile.Recommendations = recommendations.Take(Configuration.NumberOfFilmsToRecommend).OrderByDescending(x => x.Rating).ToList();
+            PaintUserRecommendations();
         }
 
         private void BackgroundWorkerProfile_DoWork(object sender, System.ComponentModel.DoWorkEventArgs e)
@@ -146,7 +147,7 @@ namespace FilmRecommender
 
         private void PaintUserRecommendations()
         {
-            foreach (var filmRecommendation in userProfile.Recommendations)
+            foreach (var filmRecommendation in userProfile.Recommendations.OrderBy(x => x.Rating))
             {
                 var lblInfo = new Label
                 {
