@@ -3,6 +3,6 @@
     internal class Configuration
     {
         internal static int NumberOfFilmsToRate { get; } = 20;
-        internal static int NumberOfFilmsToRecommend { get; } = 10;
+        internal static int NumberOfFilmsToRecommend { get; } = 20;
     }
 }

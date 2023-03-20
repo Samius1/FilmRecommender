@@ -38,12 +38,11 @@ namespace FilmRecommender.Services
             }
 
             Neighborhood = PearsonCorrelationNeighborhood(userProfile);
-            //Neighborhood = CosineNeighborhood(userProfile);
         }
 
-        internal static IEnumerable<Recommendation> GetRecommendations(Profile userProfile)
+        internal static IEnumerable<Recommendation> GetFilmsRated(Profile userProfile)
         {
-            var recommendations = new List<Recommendation>();
+            var ratedFilms = new List<Recommendation>();
             var filteredFilmIds = Films.Select(x => x.Id).Except(userProfile.Scores.Keys);
             var similarUsers = Neighborhood.Where(x => x.Value > 0);
             if (similarUsers.Any())
@@ -54,32 +53,30 @@ namespace FilmRecommender.Services
             {
                 similarUsers = Neighborhood.OrderByDescending(x => x.Value).Take(similarUsers.Count() / 5);
             }
-
+            // Page 28 - Review to calculate the real answer. Create presentation with this info
             if (similarUsers?.Any() ?? false)
             {
                 foreach (var filmId in filteredFilmIds)
                 {
-                    var ratingSum = 0;
-                    var numberOfHits = 0;
+                    var nominator = 0d;
+                    var denominator = 0d;
 
                     foreach (var user in similarUsers)
                     {
                         var score = GetScoreByIds(user.Key, filmId);
                         if(score > 0)
                         {
-                            ratingSum += score;
-                            numberOfHits++;
+                            nominator += (user.Value * score);
+                            denominator += Math.Abs(user.Value);
                         }
                     }
-                    var rating = ratingSum * 1.0 / numberOfHits;
-                    if (rating >= 4)
-                    {
-                        recommendations.Add(new Recommendation { Id = filmId, Name = GetFilmName(filmId), Rating = (int)rating });
-                    }
+
+                    var rating = nominator / denominator;
+                    ratedFilms.Add(new Recommendation { Id = filmId, Name = GetFilmName(filmId), Rating = (int)rating });
                 }
             }
 
-            return recommendations.OrderByDescending(x => x.Rating);
+            return ratedFilms;
         }
 
         internal static string GetFilmName(int id)
@@ -112,9 +109,7 @@ namespace FilmRecommender.Services
                 {
                     var comparerMean = profile.Scores.Select(x => x.Value).Sum() * 1.0 / profile.Scores.Count();
 
-                    var similitude = 0d;
                     var numerator = 0d;
-                    var denominator = 0d;
                     foreach (var film in filmsInCommon)
                     {
                         var userNumerator = userProfile.Scores.First(x => x.Key == film.Key).Value - userMean;
@@ -122,43 +117,11 @@ namespace FilmRecommender.Services
                         numerator += (userNumerator * comparerNumerator);
                     }
 
-                    var userDenominator = userProfile.Scores//.Where(x => profile.Scores.ContainsKey(x.Key))
-                                            .Select(x => (x.Value - userMean) * (x.Value - userMean)).Sum();
-                    var comparerDenominator = profile.Scores
-                                            .Select(x => (x.Value - comparerMean) * (x.Value - comparerMean)).Sum();
-                    denominator = Math.Sqrt(userDenominator) * Math.Sqrt(comparerDenominator);
+                    var userDenominator = userProfile.Scores.Select(x => (x.Value - userMean) * (x.Value - userMean)).Sum();
+                    var comparerDenominator = profile.Scores.Select(x => (x.Value - comparerMean) * (x.Value - comparerMean)).Sum();
+                    var denominator = Math.Sqrt(userDenominator) * Math.Sqrt(comparerDenominator);
 
-                    similitude = numerator / denominator;
-                    userSimilitudes.Add(profile.UserId, similitude);
-                }
-            }
-            return userSimilitudes;
-        }
-
-        private static Dictionary<int, double> CosineNeighborhood(Profile userProfile)
-        {
-            var userSimilitudes = new Dictionary<int, double>();
-            foreach (var profile in Model.Select(x => x.Value))
-            {
-                var filmsInCommon = profile.Scores.Where(x => userProfile.Scores.ContainsKey(x.Key));
-                if (filmsInCommon.Any())
-                {
-                    var similitude = 0d;
-                    var numerator = 0d;
-                    var denominator = 0d;
-                    foreach (var film in filmsInCommon)
-                    {
-                        var userNumerator = userProfile.Scores.First(x => x.Key == film.Key).Value;
-                        var comparerNumerator = filmsInCommon.First(x => x.Key == film.Key).Value;
-                        numerator += userNumerator * comparerNumerator;
-                    }
-
-                    var userDenominator = userProfile.Scores.Where(x => profile.Scores.ContainsKey(x.Key))
-                                            .Select(x => x.Value * x.Value).Sum();
-                    var comparerDenominator = filmsInCommon.Select(x => x.Value * x.Value).Sum();
-                    denominator = Math.Sqrt(userDenominator) * Math.Sqrt(comparerDenominator);
-
-                    similitude = numerator / denominator;
+                    var similitude = numerator / denominator;
                     userSimilitudes.Add(profile.UserId, similitude);
                 }
             }

@@ -2,8 +2,8 @@
 {
     internal class Recommendation
     {
-        internal int Id { get; set; }
-        internal string Name { get; set; }
-        internal int Rating { get; set; }
+        public int Id { get; set; }
+        public string Name { get; set; }
+        public int Rating { get; set; }
     }
 }

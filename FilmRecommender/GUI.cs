@@ -24,6 +24,11 @@ namespace FilmRecommender
                 TabContent.Visible = true;
                 BtnLoadModel.Text = NewModelButtonText;
             }
+
+            if(userProfile.Recommendations.Count > 0)
+            {
+                PaintUserRecommendations();
+            }
         }
 
         private void BtnLoadModel_Click(object sender, EventArgs e)
@@ -35,28 +40,14 @@ namespace FilmRecommender
         {
             UpdateProfileFromUI();
             UserService.SaveUserProfile(userProfile);
-            TabPageRecommendations.Enabled = true;
         }
 
         private void BtnRecommendations_Click(object sender, EventArgs e)
         {
             PanelRecommendations.Controls.Clear();
             MovieLensService.CreateNeighborhood(userProfile);
-            var recommendations = MovieLensService.GetRecommendations(userProfile);
-            foreach (var recommendation in recommendations.Take(Configuration.NumberOfFilmsToRecommend).OrderBy(x => x.Rating))
-            {
-                var lblInfo = new Label();
-                lblInfo.AutoSize = true;
-                lblInfo.Dock = DockStyle.Top;
-                lblInfo.Location = new Point(0, 0);
-                lblInfo.Name = $"LblInfo{recommendation.Id}";
-                lblInfo.Size = new Size(493, 20);
-                lblInfo.Text = $"{recommendation.Name} - {recommendation.Rating} stars";
-                lblInfo.Font = new Font("Segoe UI", 20F, FontStyle.Regular, GraphicsUnit.Point);
-                lblInfo.Click += LblInfoRecommendations_Click;
-                lblInfo.Cursor = Cursors.Hand;
-                PanelRecommendations.Controls.Add(lblInfo);
-            }
+            var recommendations = MovieLensService.GetFilmsRated(userProfile);
+            userProfile.Recommendations = recommendations.Take(Configuration.NumberOfFilmsToRecommend).OrderByDescending(x => x.Rating).ToList();
         }
 
         private void BackgroundWorkerProfile_DoWork(object sender, System.ComponentModel.DoWorkEventArgs e)
@@ -72,7 +63,7 @@ namespace FilmRecommender
                 {
                     MovieLensService.LoadModel(BackgroundWorkerProfile);
                     userProfile.Scores = MovieLensService.GetFilmsToRate();
-                    userProfile.Recommendations = new List<Film>();
+                    userProfile.Recommendations = new List<Recommendation>();
                     UserService.SaveUserProfile(userProfile);
                 }
             }
@@ -89,7 +80,6 @@ namespace FilmRecommender
             {
                 PaintUserRatings();
                 TabContent.Visible = true;
-                TabPageRecommendations.Enabled = false;
                 BtnLoadModel.Text = NewModelButtonText;
             }
             else
@@ -124,16 +114,16 @@ namespace FilmRecommender
         private void UpdateProfileFromUI()
         {
             var userRatings = new Dictionary<int, int>();
-            var userRecommendations = new List<Film>();
+            var userRecommendations = new List<Recommendation>();
 
             foreach (var rating in PanelRatedFilms.Controls.OfType<FilmRating>())
             {
                 userRatings.Add(rating.Id, rating.Rating);
             }
-            
+
             foreach (var recommendations in PanelRecommendations.Controls.OfType<Label>())
             {
-                userRecommendations.Add(GetFilmFromLabel(recommendations));
+                userRecommendations.Add(GetRecommendationFromLabel(recommendations));
             }
 
             userProfile.Scores = userRatings;
@@ -154,6 +144,26 @@ namespace FilmRecommender
             }
         }
 
+        private void PaintUserRecommendations()
+        {
+            foreach (var filmRecommendation in userProfile.Recommendations)
+            {
+                var lblInfo = new Label
+                {
+                    AutoSize = true,
+                    Dock = DockStyle.Top,
+                    Location = new Point(0, 0),
+                    Name = $"LblInfo{filmRecommendation.Id}",
+                    Size = new Size(493, 20),
+                    Text = $"{filmRecommendation.Name} - {filmRecommendation.Rating} stars",
+                    Font = new Font("Segoe UI", 20F, FontStyle.Regular, GraphicsUnit.Point)
+                };
+                lblInfo.Click += LblInfoRecommendations_Click;
+                lblInfo.Cursor = Cursors.Hand;
+                PanelRecommendations.Controls.Add(lblInfo);
+            }
+        }
+
         private static Film GetFilmFromLabel(Label info)
         {
             var filmId = int.Parse(info.Name.Remove(0, 7));
@@ -162,6 +172,19 @@ namespace FilmRecommender
             {
                 Id = filmId,
                 Name = filmTitle
+            };
+        }
+
+        private static Recommendation GetRecommendationFromLabel(Label info)
+        {
+            var filmId = int.Parse(info.Name.Remove(0, 7));
+            var filmTitle = MovieLensService.GetFilmName(filmId);
+            var rating = int.Parse(info.Text.Split('-').Last().Split(' ', StringSplitOptions.RemoveEmptyEntries).First());
+            return new Recommendation()
+            {
+                Id = filmId,
+                Name = filmTitle,
+                Rating = rating
             };
         }
     }
