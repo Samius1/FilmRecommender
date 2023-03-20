@@ -37,20 +37,22 @@ namespace FilmRecommender.Services
                 RecreateModel();
             }
 
-            //Neighborhood = PearsonCorrelationNeighborhood(userProfile);
-            Neighborhood = CosineNeighborhood(userProfile);
+            Neighborhood = PearsonCorrelationNeighborhood(userProfile);
+            //Neighborhood = CosineNeighborhood(userProfile);
         }
 
         internal static IEnumerable<Recommendation> GetRecommendations(Profile userProfile)
         {
             var recommendations = new List<Recommendation>();
             var filteredFilmIds = Films.Select(x => x.Id).Except(userProfile.Scores.Keys);
-            IEnumerable<int>? similarUsers = null;
-            var similarity = 0.8;
-            while (similarUsers == null || !similarUsers.Any() || similarity > 0) 
+            var similarUsers = Neighborhood.Where(x => x.Value > 0);
+            if (similarUsers.Any())
             {
-                similarUsers = Neighborhood.Where(x => x.Value >= similarity).Select(x => x.Key);
-                similarity = similarity - 0.2;
+                similarUsers = similarUsers.OrderByDescending(x => x.Value).Take(similarUsers.Count() / 5);
+            }
+            else
+            {
+                similarUsers = Neighborhood.OrderByDescending(x => x.Value).Take(similarUsers.Count() / 5);
             }
 
             if (similarUsers?.Any() ?? false)
@@ -60,9 +62,9 @@ namespace FilmRecommender.Services
                     var ratingSum = 0;
                     var numberOfHits = 0;
 
-                    foreach (var userId in similarUsers)
+                    foreach (var user in similarUsers)
                     {
-                        var score = GetScoreByIds(userId, filmId);
+                        var score = GetScoreByIds(user.Key, filmId);
                         if(score > 0)
                         {
                             ratingSum += score;
@@ -108,7 +110,7 @@ namespace FilmRecommender.Services
                 var filmsInCommon = profile.Scores.Where(x => userProfile.Scores.ContainsKey(x.Key));
                 if (filmsInCommon.Any())
                 {
-                    var comparerMean = filmsInCommon.Select(x => x.Value).Sum() * 1.0 / filmsInCommon.Count();
+                    var comparerMean = profile.Scores.Select(x => x.Value).Sum() * 1.0 / profile.Scores.Count();
 
                     var similitude = 0d;
                     var numerator = 0d;
@@ -117,13 +119,13 @@ namespace FilmRecommender.Services
                     {
                         var userNumerator = userProfile.Scores.First(x => x.Key == film.Key).Value - userMean;
                         var comparerNumerator = filmsInCommon.First(x => x.Key == film.Key).Value - comparerMean;
-                        numerator += userNumerator * comparerNumerator;
+                        numerator += (userNumerator * comparerNumerator);
                     }
 
-                    var userDenominator = userProfile.Scores.Where(x => profile.Scores.ContainsKey(x.Key))
+                    var userDenominator = userProfile.Scores//.Where(x => profile.Scores.ContainsKey(x.Key))
                                             .Select(x => (x.Value - userMean) * (x.Value - userMean)).Sum();
-                    var comparerDenominator = filmsInCommon
-                                            .Select(x => (x.Value - userMean) * (x.Value - userMean)).Sum();
+                    var comparerDenominator = profile.Scores
+                                            .Select(x => (x.Value - comparerMean) * (x.Value - comparerMean)).Sum();
                     denominator = Math.Sqrt(userDenominator) * Math.Sqrt(comparerDenominator);
 
                     similitude = numerator / denominator;

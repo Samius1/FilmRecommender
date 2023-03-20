@@ -101,20 +101,19 @@ namespace FilmRecommender
         private void LblInfoRecommendations_Click(object sender, EventArgs e)
         {
             var label = (Label)sender;
-            var filmId = int.Parse(label.Name.Remove(0, 7));
-            var filmTitle = MovieLensService.GetFilmName(filmId);
+            var film = GetFilmFromLabel(label);
             var dialogRating = new RateSingleMovie();
-            dialogRating.SetTitle(filmTitle);
+            dialogRating.SetTitle(film.Name);
             if (dialogRating.ShowDialog() == DialogResult.OK)
             {
-                userProfile.Scores.Add(filmId, dialogRating.Rating);
+                userProfile.Scores.Add(film.Id, dialogRating.Rating);
                 UserService.SaveUserProfile(userProfile);
 
                 PanelRecommendations.Controls.Remove(label);
 
                 var filmRating = new FilmRating();
-                filmRating.Id = filmId;
-                filmRating.SetTitle(filmTitle);
+                filmRating.Id = film.Id;
+                filmRating.SetTitle(film.Name);
                 filmRating.SetRating(dialogRating.Rating);
                 filmRating.Dock = DockStyle.Top;
 
@@ -125,11 +124,20 @@ namespace FilmRecommender
         private void UpdateProfileFromUI()
         {
             var userRatings = new Dictionary<int, int>();
+            var userRecommendations = new List<Film>();
+
             foreach (var rating in PanelRatedFilms.Controls.OfType<FilmRating>())
             {
                 userRatings.Add(rating.Id, rating.Rating);
             }
+            
+            foreach (var recommendations in PanelRecommendations.Controls.OfType<Label>())
+            {
+                userRecommendations.Add(GetFilmFromLabel(recommendations));
+            }
+
             userProfile.Scores = userRatings;
+            userProfile.Recommendations = userRecommendations;
         }
 
         private void PaintUserRatings()
@@ -144,6 +152,17 @@ namespace FilmRecommender
 
                 PanelRatedFilms.Controls.Add(filmRating);
             }
+        }
+
+        private static Film GetFilmFromLabel(Label info)
+        {
+            var filmId = int.Parse(info.Name.Remove(0, 7));
+            var filmTitle = MovieLensService.GetFilmName(filmId);
+            return new Film()
+            {
+                Id = filmId,
+                Name = filmTitle
+            };
         }
     }
 }
