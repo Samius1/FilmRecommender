@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(RateSingleMovie));
             FilmRatingControl = new FilmRating();
             PanelButtons = new Panel();
             BtnSave = new Button();
@@ -61,16 +62,17 @@
             BtnSave.UseVisualStyleBackColor = true;
             BtnSave.Click += BtnSave_Click;
             // 
-            // RateSingleMovil
+            // RateSingleMovie
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(1152, 112);
             Controls.Add(PanelButtons);
             Controls.Add(FilmRatingControl);
+            Icon = (Icon)resources.GetObject("$this.Icon");
             MaximizeBox = false;
             MinimizeBox = false;
-            Name = "RateSingleMovil";
+            Name = "RateSingleMovie";
             StartPosition = FormStartPosition.CenterScreen;
             Text = "Rate the movie";
             TopMost = true;
