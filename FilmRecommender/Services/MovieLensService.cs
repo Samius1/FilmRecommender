@@ -51,7 +51,7 @@ namespace FilmRecommender.Services
             }
             else
             {
-                similarUsers = Neighborhood.OrderByDescending(x => x.Value).Take(similarUsers.Count() / 5);
+                similarUsers = Neighborhood.OrderByDescending(x => x.Value).Take(Neighborhood.Count() / 5);
             }
 
             if (similarUsers?.Any() ?? false)
@@ -73,7 +73,8 @@ namespace FilmRecommender.Services
                     }
 
                     var rating = principalUserMean + nominator / denominator;
-                    ratedFilms.Add(new Recommendation { Id = filmId, Name = GetFilmName(filmId), Rating = (int)rating });
+                    var normalizedRating = NormalizeRating(rating);
+                    ratedFilms.Add(new Recommendation { Id = filmId, Name = GetFilmName(filmId), Rating = normalizedRating });
                 }
             }
 
@@ -99,9 +100,17 @@ namespace FilmRecommender.Services
             return score;
         }
 
+        private static int NormalizeRating(double rating)
+        {
+            return rating > 5 ? 5
+                : double.IsNaN(rating) ? int.MinValue
+                : rating < 1 ? 1
+                : (int)rating;
+        }
+
         private static Dictionary<int, (double, double)> PearsonCorrelationNeighborhood(Profile userProfile)
         {
-            var userSimilitudes = new Dictionary<int, (double, double)>();
+            var usersSimilitude = new Dictionary<int, (double, double)>();
             var userMean = userProfile.Scores.Values.Sum() * 1.0 / userProfile.Scores.Count;
             foreach (var profile in Model.Select(x => x.Value))
             {
@@ -113,20 +122,20 @@ namespace FilmRecommender.Services
                     var numerator = 0d;
                     foreach (var film in filmsInCommon)
                     {
-                        var userNumerator = userProfile.Scores.First(x => x.Key == film.Key).Value - userMean;
-                        var comparerNumerator = filmsInCommon.First(x => x.Key == film.Key).Value - comparerMean;
+                        var userNumerator = EnsureItIsNotZero(userProfile.Scores.First(x => x.Key == film.Key).Value - userMean);
+                        var comparerNumerator = EnsureItIsNotZero(filmsInCommon.First(x => x.Key == film.Key).Value - comparerMean);
                         numerator += (userNumerator * comparerNumerator);
                     }
 
-                    var userDenominator = userProfile.Scores.Select(x => (x.Value - userMean) * (x.Value - userMean)).Sum();
-                    var comparerDenominator = profile.Scores.Select(x => (x.Value - comparerMean) * (x.Value - comparerMean)).Sum();
-                    var denominator = Math.Sqrt(userDenominator) * Math.Sqrt(comparerDenominator);
+                    var userDenominator = userProfile.Scores.Select(x => EnsureItIsNotZero(x.Value - userMean) * EnsureItIsNotZero(x.Value - userMean)).Sum();
+                    var comparerDenominator = profile.Scores.Select(x => EnsureItIsNotZero(x.Value - comparerMean) * EnsureItIsNotZero(x.Value - comparerMean)).Sum();
+                    var denominator = EnsureItIsNotZero(Math.Sqrt(userDenominator) * Math.Sqrt(comparerDenominator));
 
                     var similitude = numerator / denominator;
-                    userSimilitudes.Add(profile.UserId, (similitude, comparerMean));
+                    usersSimilitude.Add(profile.UserId, (similitude, comparerMean));
                 }
             }
-            return userSimilitudes;
+            return usersSimilitude;
         }
 
         private static void RecreateModel()
@@ -163,7 +172,7 @@ namespace FilmRecommender.Services
             backgroundWorker?.ReportProgress(0);
             var movies = Properties.Resources.films;
             var movieList = movies.Split('\n', StringSplitOptions.RemoveEmptyEntries);
-            for (int i = 0; i < movieList.Length; i++)
+            for (var i = 0; i < movieList.Length; i++)
             {
                 var movieData = movieList[i].Split('|');
                 Films.Add(
@@ -175,6 +184,11 @@ namespace FilmRecommender.Services
 
                 backgroundWorker?.ReportProgress((i + 1) * 100 / movieList.Count());
             }
+        }
+
+        private static double EnsureItIsNotZero(double number)
+        {
+            return number == 0 ? 0.1 : number;
         }
     }
 }

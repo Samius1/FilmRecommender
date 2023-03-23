@@ -9,6 +9,7 @@ namespace FilmRecommender
         private Profile userProfile;
         private const string NewModelButtonText = "New model";
         private const string LoadModelButtonText = "Load model";
+        private const string PromotionalFilmText = "Checkout this film!";
 
         public GUI()
         {
@@ -33,7 +34,10 @@ namespace FilmRecommender
 
         private void BtnLoadModel_Click(object sender, EventArgs e)
         {
-            BackgroundWorkerProfile.RunWorkerAsync();
+            if (!BackgroundWorkerProfile.IsBusy)
+            {
+                BackgroundWorkerProfile.RunWorkerAsync();
+            }
         }
 
         private void BtnSaveProfile_Click(object sender, EventArgs e)
@@ -44,10 +48,10 @@ namespace FilmRecommender
 
         private void BtnRecommendations_Click(object sender, EventArgs e)
         {
-            PanelRecommendations.Controls.Clear();
             MovieLensService.CreateNeighborhood(userProfile);
             var recommendations = MovieLensService.GetFilmsRated(userProfile);
-            userProfile.Recommendations = recommendations.Take(Configuration.NumberOfFilmsToRecommend).OrderByDescending(x => x.Rating).ToList();
+            userProfile.Recommendations = recommendations.OrderByDescending(x => x.Rating).Take(Configuration.NumberOfFilmsToRecommend).ToList();
+            AddThreeRandomRecommendations(recommendations);
             PaintUserRecommendations();
         }
 
@@ -85,7 +89,8 @@ namespace FilmRecommender
             }
             else
             {
-
+                PaintUserRatings();
+                PaintUserRecommendations();
             }
         }
 
@@ -133,6 +138,7 @@ namespace FilmRecommender
 
         private void PaintUserRatings()
         {
+            PanelRatedFilms.Controls.Clear();
             foreach (var filmScore in userProfile.Scores)
             {
                 var filmRating = new FilmRating();
@@ -147,8 +153,13 @@ namespace FilmRecommender
 
         private void PaintUserRecommendations()
         {
+            PanelRecommendations.Controls.Clear();
             foreach (var filmRecommendation in userProfile.Recommendations.OrderBy(x => x.Rating))
             {
+                var starsText = filmRecommendation.Rating == int.MinValue
+                                        ? PromotionalFilmText
+                                        : $"{filmRecommendation.Rating} stars";
+
                 var lblInfo = new Label
                 {
                     AutoSize = true,
@@ -156,12 +167,44 @@ namespace FilmRecommender
                     Location = new Point(0, 0),
                     Name = $"LblInfo{filmRecommendation.Id}",
                     Size = new Size(493, 20),
-                    Text = $"{filmRecommendation.Name} - {filmRecommendation.Rating} stars",
+                    Text = $"{filmRecommendation.Name} - {starsText}",
                     Font = new Font("Segoe UI", 20F, FontStyle.Regular, GraphicsUnit.Point)
                 };
+
+                if (starsText == PromotionalFilmText)
+                {
+                    lblInfo.BackColor = Color.Black;
+                    lblInfo.ForeColor = Color.FromArgb(205, 164, 52);
+                }
+
                 lblInfo.Click += LblInfoRecommendations_Click;
                 lblInfo.Cursor = Cursors.Hand;
                 PanelRecommendations.Controls.Add(lblInfo);
+            }
+        }
+
+        private void AddThreeRandomRecommendations(IEnumerable<Recommendation> recommendations)
+        {
+            var anyMovieToCheck = recommendations.Any(x => userProfile.Recommendations.Contains(x));
+            if (!anyMovieToCheck)
+            {
+                return;
+            }
+
+            var nonCommonRecommendations = recommendations.Where(x => x.Rating == int.MinValue);
+
+            var counter = 0;
+            var rand = new Random();
+            while (counter < 3 && anyMovieToCheck)
+            {
+                var newRecommendation = nonCommonRecommendations.ElementAt(rand.Next(0, nonCommonRecommendations.Count()));
+                if (!userProfile.Recommendations.Contains(newRecommendation))
+                {
+                    userProfile.Recommendations.Add(newRecommendation);
+                }
+
+                counter++;
+                anyMovieToCheck = recommendations.Any(x => userProfile.Recommendations.Contains(x));
             }
         }
 
@@ -180,7 +223,9 @@ namespace FilmRecommender
         {
             var filmId = int.Parse(info.Name.Remove(0, 7));
             var filmTitle = MovieLensService.GetFilmName(filmId);
-            var rating = int.Parse(info.Text.Split('-').Last().Split(' ', StringSplitOptions.RemoveEmptyEntries).First());
+            var rating = info.Text.Contains(PromotionalFilmText) 
+                            ? int.MinValue 
+                            : (int.Parse(info.Text.Split('-').Last().Split(' ', StringSplitOptions.RemoveEmptyEntries).First()));
             return new Recommendation()
             {
                 Id = filmId,
