@@ -18,6 +18,7 @@ namespace FilmRecommender
 
         private void GUI_Load(object sender, EventArgs e)
         {
+            Configuration.LoadConfiguration();
             userProfile = UserService.LoadUserProfile();
             if (userProfile.Scores.Count > 0)
             {
@@ -34,6 +35,7 @@ namespace FilmRecommender
 
         private void BtnLoadModel_Click(object sender, EventArgs e)
         {
+            Configuration.LoadConfiguration();
             if (!BackgroundWorkerProfile.IsBusy)
             {
                 BackgroundWorkerProfile.RunWorkerAsync();
@@ -48,10 +50,11 @@ namespace FilmRecommender
 
         private void BtnRecommendations_Click(object sender, EventArgs e)
         {
+            Configuration.LoadConfiguration();
             MovieLensService.CreateNeighborhood(userProfile);
             var recommendations = MovieLensService.GetFilmsRated(userProfile);
             userProfile.Recommendations = recommendations.OrderByDescending(x => x.Rating).Take(Configuration.NumberOfFilmsToRecommend).ToList();
-            AddThreeRandomRecommendations(recommendations);
+            AddRandomRecommendations(recommendations);
             PaintUserRecommendations();
         }
 
@@ -183,7 +186,7 @@ namespace FilmRecommender
             }
         }
 
-        private void AddThreeRandomRecommendations(IEnumerable<Recommendation> recommendations)
+        private void AddRandomRecommendations(IEnumerable<Recommendation> recommendations)
         {
             var anyMovieToCheck = recommendations.Any(x => userProfile.Recommendations.Contains(x));
             if (!anyMovieToCheck)
@@ -195,7 +198,7 @@ namespace FilmRecommender
 
             var counter = 0;
             var rand = new Random();
-            while (counter < 3 && anyMovieToCheck)
+            while (counter < Configuration.NumberOfRandomFilms && anyMovieToCheck)
             {
                 var newRecommendation = nonCommonRecommendations.ElementAt(rand.Next(0, nonCommonRecommendations.Count()));
                 if (!userProfile.Recommendations.Contains(newRecommendation))

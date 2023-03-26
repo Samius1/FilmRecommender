@@ -235,6 +235,7 @@
             Icon = (Icon)resources.GetObject("$this.Icon");
             Name = "GUI";
             Text = "Film Recommender";
+            WindowState = System.Windows.Forms.FormWindowState.Maximized;
             Load += GUI_Load;
             PanelInitializeModel.ResumeLayout(false);
             PanelInitializeModelRight.ResumeLayout(false);
